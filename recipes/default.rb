@@ -24,7 +24,7 @@ include_recipe 'windows'
 # ::Chef::Recipe.send(:include, Chef::Mixin::PowershellOut)
 ::Chef::Resource::RubyBlock.send(:include, Chef::Mixin::PowershellOut)
 
-i#f File.exist?('C:\windows\sysnative\cmd.exe')
+#if File.exist?('C:\windows\sysnative\cmd.exe')
 #  arch = :x86_64
 #  cmd = 'C:\windows\sysnative\cmd.exe'
 #else
