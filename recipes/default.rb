@@ -24,13 +24,13 @@ include_recipe 'windows'
 # ::Chef::Recipe.send(:include, Chef::Mixin::PowershellOut)
 ::Chef::Resource::RubyBlock.send(:include, Chef::Mixin::PowershellOut)
 
-if File.exist?('C:\windows\sysnative\cmd.exe')
-  arch = :x86_64
-  cmd = 'C:\windows\sysnative\cmd.exe'
-else
-  arch = nil
-  cmd = 'cmd.exe'
-end
+i#f File.exist?('C:\windows\sysnative\cmd.exe')
+#  arch = :x86_64
+#  cmd = 'C:\windows\sysnative\cmd.exe'
+#else
+#  arch = nil
+#  cmd = 'cmd.exe'
+#end
 
 # Add ability to download Chocolatey install script behind a proxy
 # This also works if you are not behind a proxy
@@ -46,8 +46,8 @@ encoded_script = command.encode('UTF-16LE', 'UTF-8')
 chocolatey_install_script = Base64.strict_encode64(encoded_script)
 
 batch 'install chocolatey' do
-  architecture arch
-  interpreter cmd
+#  architecture arch
+#  interpreter cmd
   code <<-EOH
     powershell -noprofile -inputformat none -noninteractive -executionpolicy bypass -EncodedCommand #{chocolatey_install_script}
   EOH
