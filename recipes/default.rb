@@ -17,12 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+unless node['platform_family'] == 'windows'
+  return "Chocolatey install not supported on #{node['platform_family']}"
+end
 
-return 'platform not supported' if node['platform_family'] != 'windows'
-include_recipe 'windows'
+Chef::Resource::RubyBlock.send(:include, Chocolatey::Helpers)
 
-# ::Chef::Recipe.send(:include, Chef::Mixin::PowershellOut)
-::Chef::Resource::RubyBlock.send(:include, Chef::Mixin::PowershellOut)
+NUGET_PKG = 'chocolatey.nupkg'
+nuget_package_path = File.join(Chef::Config['file_cache_path'], NUGET_PKG)
+extract_dir = File.join(ENV['TEMP'], 'chocolatey')
 
 #if File.exist?('C:\windows\sysnative\cmd.exe')
 #  arch = :x86_64
@@ -54,21 +57,22 @@ batch 'install chocolatey' do
   not_if { ChocolateyHelpers.chocolatey_installed? }
 end
 
-ruby_block "reset ENV['ChocolateyInstall']" do
+windows_zipfile extract_dir do
+  action :nothing
+  source nuget_package_path
+  overwrite true
+end
+
+powershell_script 'Install Chocolatey' do
+  action :nothing
+  cwd File.join(extract_dir, 'tools')
+  code install_ps1
+end
+
+ruby_block 'Ensure chocolatey.nupkg is in chocolatey/lib/chocolatey/' do
+  action :nothing
   block do
-    cmd = powershell_out!("[System.Environment]::GetEnvironmentVariable('ChocolateyInstall', 'MACHINE')")
-    ENV['ChocolateyInstall'] = cmd.stdout.chomp
-    Chef::Log.info("ChocolateyInstall is '#{ENV['ChocolateyInstall']}'")
+    require 'fileutils'
+    FileUtils.mv(nuget_package_path, chocolatey_lib_dir)
   end
-end
-
-# Issue #1: Cygwin "setup.log" size
-file 'cygwin log' do
-  path 'C:/cygwin/var/log/setup.log'
-  action :delete
-end
-
-chocolatey 'chocolatey' do
-  action :upgrade
-  only_if { node['chocolatey']['upgrade'] }
 end
