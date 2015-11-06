@@ -22,12 +22,9 @@ unless node['platform_family'] == 'windows'
   return "Chocolatey install not supported on #{node['platform_family']}"
 end
 
-Chef::Resource::RubyBlock.send(:include, Chocolatey::Helpers)
-Chef::Resource::RemoteFile.send(:include, Chocolatey::Helpers)
+Chef::Resource.send(:include, Chocolatey::Helpers)
 
-NUGET_PKG = 'chocolatey.nupkg'
-nuget_package_path = File.join(Chef::Config['file_cache_path'], NUGET_PKG)
-extract_dir = File.join(ENV['TEMP'], 'chocolatey')
+install_ps1 = File.join(Chef::Config['file_cache_path'], 'install.ps1')
 
 #if File.exist?('C:\windows\sysnative\cmd.exe')
 #  arch = :x86_64
@@ -60,22 +57,15 @@ batch 'install chocolatey' do
   not_if { chocolatey_installed? && (node['chocolatey']['upgrade'] == false) }
 end
 
-windows_zipfile extract_dir do
+ruby_block 'set proxy' do
   action :nothing
-  source nuget_package_path
-  overwrite true
+  block do
+    ENV['chocolateyProxyLocation'] = Chef::Config['https_proxy'] if Chef::Config['https_proxy']
+  end
 end
 
 powershell_script 'Install Chocolatey' do
   action :nothing
-  cwd File.join(extract_dir, 'tools')
+  cwd Chef::Config['file_cache_path']
   code install_ps1
-end
-
-ruby_block 'Ensure chocolatey.nupkg is in chocolatey/lib/chocolatey/' do
-  action :nothing
-  block do
-    require 'fileutils'
-    FileUtils.cp(nuget_package_path, chocolatey_lib_dir)
-  end
 end
