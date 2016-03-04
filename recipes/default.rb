@@ -54,7 +54,7 @@ batch 'install chocolatey' do
     powershell -noprofile -inputformat none -noninteractive -executionpolicy bypass -EncodedCommand #{chocolatey_install_script}
   EOH
   not_if { ChocolateyHelpers.chocolatey_installed? }
-  not_if { node['chocolatey']['url'] == 'https://chocolatey.org/install.ps1' }
+  only_if { node['chocolatey']['url'] }
   not_if { chocolatey_installed? && (node['chocolatey']['upgrade'] == false) }
 end
 
@@ -64,7 +64,7 @@ template install_ps1 do
   source 'InstallChocolatey.ps1.erb'
   variables :download_url => node['chocolatey']['install_vars']['chocolateyDownloadUrl']
   notifies :run, 'powershell_script[Install Chocolatey]', :immediately
-  only_if { node['chocolatey']['url'] == 'https://chocolatey.org/install.ps1' }
+  not_if { node['chocolatey']['url'] }
   not_if { chocolatey_installed? && (node['chocolatey']['upgrade'] == false) }
 end
 
